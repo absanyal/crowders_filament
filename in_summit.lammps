@@ -1,0 +1,145 @@
+include in.variables
+
+variable prun equal 3000000
+variable recordinterval equal 1000
+variable pdump equal 1000
+variable crowdernum equal 1933
+# variable crowdernum equal 0
+
+
+units lj
+dimension 3
+neighbor 1.5 bin
+neigh_modify every 1 delay 0 check yes
+boundary p p p
+
+atom_style molecular
+
+read_data polymer.data
+
+# region membrane cylinder x 175.0 175.0 175.0 0 1000
+# region membrane block 0 1000 345 350 0 350
+
+# randomly distribute crowders
+region cell block 0 150 0 150 0 150
+create_atoms 3 random ${crowdernum} ${vseed} cell
+
+
+group chain1 type 1
+group crowders type 3
+
+velocity chain1 create 310 ${vseed} rot yes dist gaussian
+velocity crowders create 310 ${vseed} rot yes dist gaussian
+
+# pair_style zero 15.0 nocoeff
+pair_style lj/cut 8.0
+# pair_coeff * *
+
+# Monomer-monomer interaction
+pair_coeff 1 1 5.0 5.0 5.612
+# pair_coeff 1 1 lj/cut 5.0 5.0 5.612
+
+# Monomer-crowder interaction
+# pair_coeff 1 3 lj/cut 5.0 7.5 8.418
+pair_coeff 1 3 5.0 7.5 8.418
+
+# Crowder-crowder interaction
+# pair_coeff 3 3 lj/cut 5.0 10.0 11.225
+pair_coeff 3 3 5.0 10.0 11.225
+
+pair_coeff 2 2 5.0 5.0 5.612
+pair_coeff 2 3 5.0 5.0 5.612
+pair_coeff 2 1 5.0 5.0 5.612
+
+pair_modify shift yes
+
+bond_style harmonic
+bond_coeff 1 1500.0 2.5
+
+angle_style harmonic
+angle_coeff 1 15000.0 180.0
+
+timestep 0.0000100000
+
+dump minimization all atom ${pdump} dump/dump.min.${xx}.lammpstrj
+# minimize 0.0 1.0e-5 10000 10000
+
+
+fix wallchain1 chain1 wall/region cell lj126 5.0 2.5 2.806
+fix wallcrowders crowders wall/region cell lj126 5.0 5.0 5.612
+# fix walllinkermem link_em wall/region cell lj93 5.0 1.0 0.858
+# fix walllinkermem link_em wall/region membrane lj93 5.0 1.0 0.858
+# fix walllinkermem link_em wall/region membrane harmonic 1000.0 0.0 0.1
+# fix walllinkermem link_em enforce2d
+
+fix min1 all nve/limit 1.0e-4
+fix min2 all langevin 310 310 1.0 ${vseed}
+
+
+
+# variable x1 equal x[21]
+# variable y1 equal y[21]
+# variable z1 equal z[21]
+
+# variable x2 equal x[22]
+# variable y2 equal y[22]
+# variable z2 equal z[22]
+
+# variable x3 equal x[23]
+# variable y3 equal y[23]
+# variable z3 equal z[23]
+
+# variable x4 equal x[24]
+# variable y4 equal y[24]
+# variable z4 equal z[24]
+
+# variable x5 equal x[25]
+# variable y5 equal y[25]
+# variable z5 equal z[25]
+
+variable e1x equal x[1]
+variable e1y equal y[1]
+variable e1z equal z[1]
+
+variable e2x equal x[20]
+variable e2y equal y[20]
+variable e2z equal z[20]
+
+compute comchain chain1 com
+
+variable comx equal c_comchain[1]
+variable comy equal c_comchain[2]
+variable comz equal c_comchain[3]
+
+thermo_style custom step time temp etotal
+thermo 10000
+
+# minimization settings
+run 200000
+
+unfix min1
+unfix min2
+
+undump minimization
+
+reset_timestep 0
+
+variable tsteps equal time
+
+shell mkdir ./link_pos/ ./e2e_pos/ ./com_pos/ ./dump/
+
+# fix link_pos all print ${recordinterval} "${tsteps} ${x1} ${y1} ${z1} ${x2} ${y2} ${z2} ${x3} ${y3} ${z3} ${x4} ${y4} ${z4} ${x5} ${y5} ${z5} " file link_pos/link_pos.${xx}.txt screen no
+
+fix e2e_pos all print ${recordinterval} "${tsteps} ${e1x} ${e1y} ${e1z} ${e2x} ${e2y} ${e2z} " file e2e_pos/e2e_pos.${xx}.txt screen no
+
+fix com_pos all print ${recordinterval} "${tsteps} ${comx} ${comy} ${comz}" file com_pos/com_pos.${xx}.txt screen no
+
+dump mydump all atom ${pdump} dump/dump.${xx}.lammpstrj
+
+fix 2 chain1 brownian 310 ${vseed} gamma_t 1.0
+fix 3 crowders brownian 310 ${vseed} gamma_t 0.5
+# fix 4 link_em planeforce 1.0 0.0 0.0
+
+thermo 100000
+
+run ${prun}

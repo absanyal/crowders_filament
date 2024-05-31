@@ -1,0 +1,9 @@
+*
+
+!.gitignore
+
+!*.py
+!*.lammps
+!*.sh
+
+test.*
