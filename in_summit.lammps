@@ -1,6 +1,6 @@
 include in.variables
 
-variable prun equal 3000000
+variable prun equal 100000
 variable recordinterval equal 1000
 variable pdump equal 1000
 variable crowdernum equal 1933
@@ -28,8 +28,11 @@ create_atoms 3 random ${crowdernum} ${vseed} cell
 group chain1 type 1
 group crowders type 3
 
-velocity chain1 create 310 ${vseed} rot yes dist gaussian
-velocity crowders create 310 ${vseed} rot yes dist gaussian
+# velocity chain1 create 310 ${vseed} rot yes dist gaussian
+# velocity crowders create 310 ${vseed} rot yes dist gaussian
+
+velocity chain1 create 1.0 ${vseed} rot yes dist gaussian
+# velocity crowders create 1.0 ${vseed} rot yes dist gaussian
 
 # pair_style zero 15.0 nocoeff
 pair_style lj/cut 8.0
@@ -73,7 +76,10 @@ fix wallcrowders crowders wall/region cell lj126 5.0 5.0 5.612
 # fix walllinkermem link_em enforce2d
 
 fix min1 all nve/limit 1.0e-4
+
 fix min2 all langevin 310 310 1.0 ${vseed}
+# fix min2 all langevin 1.0 1.0 1.0 ${vseed}
+
 
 
 
@@ -115,7 +121,7 @@ thermo_style custom step time temp etotal
 thermo 10000
 
 # minimization settings
-run 200000
+run 100000
 
 unfix min1
 unfix min2
@@ -138,7 +144,15 @@ dump mydump all atom ${pdump} dump/dump.${xx}.lammpstrj
 
 fix 2 chain1 brownian 310 ${vseed} gamma_t 1.0
 fix 3 crowders brownian 310 ${vseed} gamma_t 0.5
+
 # fix 4 link_em planeforce 1.0 0.0 0.0
+
+
+# fix 2 chain1 brownian 1.0 ${vseed} gamma_t 1.0
+# fix 3 crowders brownian 1.0 ${vseed} gamma_t 0.5
+
+# fix 2 all nve
+# fix ID all langevin 1.0 1.0 1.0 ${vseed} angmom no
 
 thermo 100000
 

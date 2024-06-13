@@ -13,7 +13,7 @@ dy = y - y[0]
 dz = z - z[0]
 
 t_max = len(t)
-sample_window_fraction = 0.20
+sample_window_fraction = 0.1
 sample_window = int(t_max * sample_window_fraction)
 print("Total iterations: {}".format(t_max))
 print("Sample window: {} iterations".format(sample_window))
