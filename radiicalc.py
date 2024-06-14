@@ -1,9 +1,9 @@
 import numpy as np
 from numpy import pi
 
-cell_x_len = 150
-cell_y_len = 150
-cell_z_len = 150
+cell_x_len = 1000
+cell_y_len = 350
+cell_z_len = 350
 
 crowder_fraction = 0.3
 
